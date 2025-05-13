@@ -162,9 +162,11 @@ const ACTIVE: Color32 = Color32::from_rgb(82, 82, 125);
 const OPEN: Color32 = Color32::from_rgb(74, 74, 115);
 
 fn visuals() -> egui::Visuals {
-	let mut visuals = egui::Visuals::default();
+	let mut visuals = egui::Visuals {
+		dark_mode: true,
+		..egui::Visuals::default()
+	};
 
-	visuals.dark_mode = true;
 	// Background
 	visuals.window_stroke = egui::Stroke::NONE;
 	visuals.extreme_bg_color = Color32::from_hex("#11304390").unwrap();
@@ -287,7 +289,9 @@ impl eframe::App for TemplateApp {
 	fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
 		// Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`, `Window` or `Area`.
 		// For inspiration and more examples, go to https://emilk.github.io/egui
-		let mut groups_handle: Option<JoinHandle<(Result<Vec<String>, ReturnCode>, String)>> = None;
+		type GroupsHandle = JoinHandle<(Result<Vec<String>, ReturnCode>, String)>;
+
+		let mut groups_handle: Option<GroupsHandle> = None;
 		if self.check_count >= 10000 {
 			groups_handle = Some(thread::spawn(|| {
 				let mut output = "".to_string();
@@ -297,7 +301,12 @@ impl eframe::App for TemplateApp {
 		}
 		self.check_count += 1;
 
-		egui::CentralPanel::default().frame(egui::Frame::default().fill(PANEL_FILL).inner_margin(egui::Margin::symmetric(12.0, 12.0)))
+		egui::CentralPanel::default()
+			.frame(
+				egui::Frame::default()
+					.fill(PANEL_FILL)
+					.inner_margin(egui::Margin::symmetric(12.0, 12.0)),
+			)
 			.show(ctx, |ui| {
 				// The central panel the region left after adding TopPanel's and SidePanel's
 				ui.heading("Tuckr UI");
@@ -338,7 +347,8 @@ impl eframe::App for TemplateApp {
 
 						// check if refresh button or CTRL+R are presed
 						if ui.input_mut(|i| {
-							egui::InputState::consume_shortcut(i,
+							egui::InputState::consume_shortcut(
+								i,
 								&KeyboardShortcut {
 									modifiers: Modifiers::COMMAND,
 									logical_key: egui::Key::R,
@@ -414,20 +424,18 @@ impl eframe::App for TemplateApp {
 						&mut self.found_groups.clone().unwrap_or(vec!["".into()]),
 					));
 
-					if self.page != Page::Hooks {
-						if ui.button("Exacute").clicked() {
-							match self
-								.page
-								.clone()
-								.into_cli(self.groups.clone().unwrap_or(vec![r"\*".into()]))
-							{
-								Ok(cli) => self.output = run(cli).0,
-								Err(h) => {
-									self.output = h;
-									self.label = "select a group".into();
-								}
-							};
-						}
+					if self.page != Page::Hooks && ui.button("Exacute").clicked() {
+						match self
+							.page
+							.clone()
+							.into_cli(self.groups.clone().unwrap_or(vec![r"\*".into()]))
+						{
+							Ok(cli) => self.output = run(cli).0,
+							Err(h) => {
+								self.output = h;
+								self.label = "select a group".into();
+							}
+						};
 					}
 
 					ui.label(&self.output);
@@ -435,27 +443,24 @@ impl eframe::App for TemplateApp {
 					ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
 						egui::warn_if_debug_build(ui);
 						#[cfg(debug_assertions)]
-						ui.label(&self.check_count.to_string());
+						ui.label(self.check_count.to_string());
 					});
 				});
 			});
 
-		match groups_handle {
-			Some(groups) => {
-				if let Ok(g) = groups.join() {
-					self.output.push_str(&g.1);
-					self.found_groups = g.0.ok();
-					self.groups = self.found_groups.clone()
-				}
+		if let Some(groups) = groups_handle {
+			if let Ok(g) = groups.join() {
+				self.output.push_str(&g.1);
+				self.found_groups = g.0.ok();
+				self.groups = self.found_groups.clone()
 			}
-			None => (),
 		}
 	}
 }
 
 fn code_editer(app: &mut TemplateApp, ui: &mut Ui) {
 	let theme = egui_extras::syntax_highlighting::CodeTheme::from_style(ui.style());
-																				 // todo patch egui_extras to use tmTheme file
+	// todo patch egui_extras to use tmTheme file
 
 	let mut layouter = |ui: &egui::Ui, code: &str, wrap_width: f32| {
 		let mut layout_job = egui_extras::syntax_highlighting::highlight(ui.ctx(), &theme, code, "bash");
@@ -499,7 +504,7 @@ fn new_hook(app: &mut TemplateApp, ui: &mut Ui, hooks_dir: Option<PathBuf>, new_
 		rfd::FileDialog::new()
 			.add_filter("shell scripts", &["sh"])
 			.set_file_name(file_name)
-			.set_directory(&hooks_dir.unwrap_or_default())
+			.set_directory(hooks_dir.unwrap_or_default())
 			.save_file();
 	}
 	ui.add_space(3.0);

@@ -4,8 +4,7 @@ version = "1.0.0"
 authors = ["TimTheBig"]
 edition = "2021"
 description = "A ui for Tuckr a stow like tool for dotfile management"
-license = "GPL-v3"
-license-file = "LICENSE"
+license = "GPL-3.0"
 
 [package.metadata.bundle]
 identifier = "org.timthebig.tuckrui"
@@ -34,7 +33,7 @@ log = "0.4"
 
 # You only need serde if you want app persistence:
 serde = { version = "1", features = ["derive"] }
-egui-multiselect = { version = "0.2.0", path = "src/multiselect" }
+egui-multiselect = { version = "0.2.0", git = "https://github.com/TimTheBig/egui-multiselect.git" }
 
 # Optimize all dependencies even in debug builds:
 [profile.dev.package."*"]

@@ -9,7 +9,10 @@ pub fn push_file_picker(app: &mut TemplateApp, ui: &mut Ui) {
 	// icons
 	let folder_icon = Image::new(FOLDER_IMAGE).fit_to_original_size(1.05);
 
-	if ui.add(egui::Button::image_and_text(folder_icon, "Open file…")).clicked() {
+	if ui
+		.add(egui::Button::image_and_text(folder_icon, "Open file…"))
+		.clicked()
+	{
 		if let Some(path) = rfd::FileDialog::new().pick_files() {
 			app.push_files = Some(path.iter().filter_map(|p| p.to_str().map(|p| p.to_string())).collect());
 			app.page = Page::Push(app.push_files.take())
@@ -39,7 +42,10 @@ pub fn hook_file_picker(app: &mut TemplateApp, ui: &mut Ui, hooks_dir: Option<Pa
 	// icons
 	let folder_icon = Image::new(FOLDER_IMAGE).fit_to_original_size(1.05);
 
-	if ui.add(egui::Button::image_and_text(folder_icon, "Open file…")).clicked() {
+	if ui
+		.add(egui::Button::image_and_text(folder_icon, "Open file…"))
+		.clicked()
+	{
 		if let Some(path) = rfd::FileDialog::new()
 			.add_filter("shell scripts", &["sh"])
 			.set_directory(hooks_dir.unwrap_or(PathBuf::from("/")))
@@ -47,9 +53,8 @@ pub fn hook_file_picker(app: &mut TemplateApp, ui: &mut Ui, hooks_dir: Option<Pa
 		{
 			app.opened_hook = Some(path.display().to_string());
 			// set the contens of the code window to the selected file
-			match &app.opened_hook {
-				Some(s) => app.code = String::from_utf8_lossy(&fs::read(&s).unwrap()).into(),
-				None => (),
+			if let Some(s) = &app.opened_hook {
+				app.code = String::from_utf8_lossy(&fs::read(s).unwrap()).into()
 			}
 		}
 	}
